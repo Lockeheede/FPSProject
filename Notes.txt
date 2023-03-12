@@ -1,0 +1,67 @@
+=>Beginner Unreal Engine in C++<=
+
+->1: Create the Project
+
+->Create Maps Folder in Content
+->Save The Map->Set the Default Map in Project Settings->Maps and Modes
+
+->In Editor->File->Open in Visual Studio
+
+->Edit the GameMode first (see code)
+
+->Extend the C++ GameMode to Blueprints
+->Create Blueprints folder in Content
+->RgtClk the GameModeBase class (in C++ Classes->Project) to open C++ Class Actions menu
++Create BP class based on GameModeBase to open the Add BP Class dialog menu
++Name 'BP_GameModeBase', put in Blueprints Folder and Save
+
+->Setting Default Game Mode
+->Edit->Project Settings
+->Maps and Modes->Default GameMode->BP_GameModeBase
+
+Congratulations! You've learned how to:
+
+✓ Set up a New Project
+✓ Open your Project in Visual Studio
+✓ Add Log Messaging to your Project
+✓ Compile your First C++ Class
+✓ Set the Default Game Mode
+
+->2: Create the Character
+(We will be using the C++ Class Wizard)
+
+->File->New C++ Class->Parent = Characte->Name: 'Character'->Create Class
+
+->Verify and add code in Visual Studio
+->Compile inside VS by RgtClk on Project and select Build
+->Verify the Character is in the Editor
+
+->Extend to BP
+->Set to Default Pawn Class in Project Settings
+
+->Setting up Axis Mapping
+->MoveForward
++Project Settings->Input->Bindings->Click "+" next to Axis Mappings ('MoveForward', "1.0" = W, "-1.0" = S)
+->Do another for 'MoveRight', "1.0" = D, "-1.0" = A
+
+->Add Movement Functions to Character
+->Go to Character.h and add the function declarations under SetupPlayerInputComponent
+->In Character.cpp add the code to the SetupPlayerInputComponent function under Super::SetupPlayerInputComponent(PlayerInputComponent);
+->Add the MoveForward and MoveRight functions below the InputComponent function.
+->Compile and Test
+
+->Mouse Camera Control
+->Axis Mappings->'Turn' (MouseX)->'LookUp' (MouseY, "-1.0")
+->Add the code to the .cpp
+
+->Creating Character Jumping
+->Input->Action Mappings
+->"Jump", Space Bar
+->The ACharacter Base Class (.h) file has built-in jumping. So we will set a boolean to true when pressed, and false when released
++Two functions to do so: StartJump and StopJump
+->Add the code to the Character's cpp and h, build and test.
+
+->Adding a Mesh to Character
+->Download the sample mesh from the site
+->Import it into UE
+->Open the BP_Character->And in the Mesh component add the sample mesh into the Skeletal Mesh section

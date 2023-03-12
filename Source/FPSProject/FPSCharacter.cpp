@@ -9,6 +9,19 @@ AFPSCharacter::AFPSCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	//Create an FPS Camera Component
+	FPSCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
+	check(FPSCameraComponent != nullptr);
+
+	//Attach the camera component to our capsule component
+	FPSCameraComponent->SetupAttachment(CastChecked<USceneComponent, UCapsuleComponent>(GetCapsuleComponent()));
+
+	//Position the camera slightly above theeyes
+	FPSCameraComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f + BaseEyeHeight));
+
+	//Enable the pawn to control camera rotation
+	FPSCameraComponent->bUsePawnControlRotation = true;
+
 }
 
 // Called when the game starts or when spawned
@@ -43,6 +56,9 @@ void AFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAxis("Turn", this, &AFPSCharacter::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &AFPSCharacter::AddControllerPitchInput);
 
+	//Set Jump Actions
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AFPSCharacter::StartJump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AFPSCharacter::StopJump);
 }
 
 void AFPSCharacter::MoveForward(float Value)
@@ -57,4 +73,14 @@ void AFPSCharacter::MoveRight(float Value)
 {
 	//Find out which way is "right" and record that the player wants to move that way
 	FVector Direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::Y); AddMovementInput(Direction, Value);
+}
+
+void AFPSCharacter::StartJump()
+{
+	bPressedJump = true;
+}
+
+void AFPSCharacter::StopJump()
+{
+	bPressedJump = false;
 }
