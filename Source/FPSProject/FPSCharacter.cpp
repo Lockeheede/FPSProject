@@ -16,11 +16,28 @@ AFPSCharacter::AFPSCharacter()
 	//Attach the camera component to our capsule component
 	FPSCameraComponent->SetupAttachment(CastChecked<USceneComponent, UCapsuleComponent>(GetCapsuleComponent()));
 
-	//Position the camera slightly above theeyes
+	//Position the camera slightly above the eyes
 	FPSCameraComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f + BaseEyeHeight));
 
 	//Enable the pawn to control camera rotation
 	FPSCameraComponent->bUsePawnControlRotation = true;
+
+	//Create a first person mesh component for the owning player
+	FPSMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
+	check(FPSMesh != nullptr);
+
+	//Only owning player sees this mesh
+	FPSMesh->SetOnlyOwnerSee(true);
+
+	//Attach the FPS mesh to the FPS camera
+	FPSMesh->SetupAttachment(FPSCameraComponent);
+
+	//Disable some enviornmental shadows to preserve the illusion of having a single mesh
+	FPSMesh->bCastDynamicShadow = false;
+	FPSMesh->CastShadow = false;
+
+	//The owning player doesn't see the third person body mesh
+	GetMesh()->SetOwnerNoSee(true);
 
 }
 
@@ -29,11 +46,12 @@ void AFPSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	check(GEngine != nullptr);
-
-	//Display a debug message for five seconds
-	//The -1 "key" value argument prevents the message from being updated or refreshed
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("We are using FPSCharacter!"));
+	if (GEngine)
+	{
+		//Display a debug message for five seconds
+		//The -1 "key" value argument prevents the message from being updated or refreshed
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("We are using FPSCharacter!"));
+	}
 }
 
 // Called every frame
@@ -59,6 +77,9 @@ void AFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	//Set Jump Actions
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AFPSCharacter::StartJump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AFPSCharacter::StopJump);
+
+	//Set Fire Actions
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AFPSCharacter::Fire);
 }
 
 void AFPSCharacter::MoveForward(float Value)
@@ -83,4 +104,43 @@ void AFPSCharacter::StartJump()
 void AFPSCharacter::StopJump()
 {
 	bPressedJump = false;
+}
+
+void AFPSCharacter::Fire()
+{
+	//Attempt to fire a projectile
+	if (ProjectileClass)
+	{
+		//Get the camera transform
+		FVector CameraLocation;
+		FRotator CameraRotation;
+		GetActorEyesViewPoint(CameraLocation, CameraRotation);
+
+		//Set MuzzleOffSet to Spawn Projectiles Slightly in Front of the Camera
+		MuzzleOffset.Set(100.0f, 0.0f, 0.0f);
+
+		//Transform MuzzleOffSet from Camera Space to World Space
+		FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
+
+		//Skew the aim to be slightly upwards
+		FRotator MuzzleRotation = CameraRotation;
+		MuzzleRotation.Pitch += 10.0f;
+
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this;
+			SpawnParams.Instigator = GetInstigator();
+
+			//Spawn projectile at muzzle
+			AFPSProjectile* Projectile = World->SpawnActor<AFPSProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+			if (Projectile)
+			{
+				//Set the projectile's initial tragectory.
+				FVector LaunchDirection = MuzzleRotation.Vector();
+				Projectile->FireInDirection(LaunchDirection);
+			}
+		}
+	}
 }
